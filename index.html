@@ -14,12 +14,55 @@
 <script>
 $(document).ready(function(){
   let DEBUG = 1;
+  let privateKey = "Ky4iVsxZhet3kFZHgM2pX3zVHpmH384YvrmtBeRkKwCzi9xi6zSe";
   let client = new CoinStack('c7dbfacbdf1510889b38c01b8440b1', '10e88e9904f29c98356fd2d12b26de', 'c3sp2.blocko.io', 'https');
 
   if (DEBUG) {
 	console.log("client: ", client);
     console.log('starting...');
   }
+
+  $('#chkBalance').on('click', function(){
+    let addr = $("#i_address").val();
+    client.getBalance(addr, function (err, balance) {
+    if (!err) {
+		var total = CoinStack.Math.toBitcoin(balance);
+
+    $('#message').text(" total : " + total);
+		console.log("address: ", addr);
+		console.log('total: ',total);
+    	}
+    }); // end of client getBalance
+  }) // end of $('#chkBalance').on
+
+
+  $('#send').on('click', function(){
+    let fromaccount =  $("#i_address").val();
+    let toaccount = $("#to_address").val();
+    let coin = $("#coin").val();
+    let txBuilder = client.createTransactionBuilder();
+    txBuilder.addOutput(toaccount, CoinStack.Math.toSatoshi(coin));
+    txBuilder.setInput(fromaccount);
+    txBuilder.buildTransaction(function (err, tx) {
+    try {
+   
+      tx.sign(privateKey);
+   
+      let rawTx = tx.serialize();
+      client.sendTransaction(rawTx, function (err) {
+      if (!err) {
+        console.log("definition: ", tx.getHash());
+        alert("거래가 완료 되었습니다..!!!");
+      }
+      });
+    } catch (e) {
+        console.log(e)
+ 
+        } //end of try
+
+      }) // end of txbuilder
+    }) // end of $('#send').on
+
 
   $('#newAccount').on('click', function(){
     let privateKey = CoinStack.ECKey.createKey();
@@ -30,6 +73,7 @@ $(document).ready(function(){
 		
     $("#i_address").val(account);
 	$('#message').text(" account: " + account);
+  
 	alert("Account 생성이 완료 되었습니다..!!!" + account );
 	// $('#i_password').val(privateKey);
 	// <input id="myField" type="text" name="email"/>
@@ -50,8 +94,12 @@ $(document).ready(function(){
     <h2><strong>Welcome to CoinStack</strong></h2>
   	<div id="tablePlace"></div>
   <button id="newAccount">New Acccount</button>
-  <button id="testBtn">Button</button>
-  <h5>송신처  <input id="i_address" size="45" placeholder=""></input> </h5>
+  <button id="chkBalance">잔액조회</button>
+  <button id="send">전송</button>
+  <h5>송신처  <input id="i_address" size="45" value="19yWcDE9eWKm3HoGxCUftq1dJJdN9W5BJe" placeholder="송신처를 입력하세요"></input> </h5> 
+  <h5>수신처  <input id="to_address" size="45" placeholder="수신처를 입력하세요"></input> </h5> 
+  <h5>코인  <input id="coin" size="45" placeholder="코인을 입력하세요"></input> </h5> 
+
   </div>
   <br>
   <br>
